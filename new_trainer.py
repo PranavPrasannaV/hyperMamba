@@ -135,13 +135,20 @@ class TokenTrie:
         node.compression_ratio = 1.0 - (compressed_bytes / max(original_bytes, 1))
 
     def longest_match(self, text: str, start: int = 0) -> Tuple[Optional[str], Optional[int], int]:
+        # SMART: Optimized trie traversal focused on actual bottlenecks
         node = self.root
         match = None
         match_id = None
         i = start
+        text_len = len(text)
 
-        while i < len(text) and text[i] in node.children:
-            node = node.children[text[i]]
+        # SPEED: Direct traversal with minimal function calls
+        while i < text_len:
+            char = text[i]
+            child = node.children.get(char)
+            if child is None:
+                break
+            node = child
             i += 1
             if node.is_end:
                 match = text[start:i]
@@ -376,9 +383,9 @@ class HyperTokenizer16k:
         self.bpe = BPEDictionary(self.config)
         self._init_enhanced_vocab()
 
-        
-        self.encode_cache: Dict[str, List[int]] = {}
-        self.decode_cache: Dict[Tuple[int, ...], str] = {}
+        # SMART caching for performance
+        self.encode_cache: Dict[Tuple, List[int]] = {}
+        self.decode_cache: Dict[Tuple, str] = {}
 
         
         self.global_counts = Counter()
@@ -632,7 +639,7 @@ class HyperTokenizer16k:
 
         return segments
 
-    @lru_cache(maxsize=5000)
+    @lru_cache(maxsize=8192)  # Increased cache size for better hit rate
     def _tokenize_segment_cached(self, seg: str, use_enhanced: bool = True) -> Tuple[str, ...]:
         return tuple(self._tokenize_segment_enhanced(seg, use_enhanced))
 
@@ -643,76 +650,158 @@ class HyperTokenizer16k:
         tokens = []
         i = 0
         length = len(text)
+        
+        # Cache frequently accessed attributes for speed
+        token_to_id = self.bpe.token_to_id
+        trie_longest_match = self.bpe.trie.longest_match
+        add_token = self.bpe.add_token
 
         while i < length:
-            
+            char = text[i]
             matched = False
             
-            
-            if text[i].isdigit():
-                j = i
-                while j < length and (text[j].isdigit() or text[j] in ".,"):
-                    j += 1
-                num_token = text[i:j]
+            # SMART: Efficient pattern matching for maximum compression
+            if char.isdigit():
+                # Enhanced numeric tokenization with version detection
+                j = i + 1
+                has_dot = False
+                while j < length:
+                    next_char = text[j]
+                    if next_char.isdigit():
+                        j += 1
+                    elif next_char in ".,":
+                        has_dot = True
+                        j += 1
+                    elif has_dot and next_char == '-' and j + 1 < length and text[j+1].isalpha():
+                        # Version number like "1.2.3-beta"
+                        j += 1
+                        while j < length and (text[j].isalnum() or text[j] in ".-"):
+                            j += 1
+                        break
+                    else:
+                        break
                 
-                if num_token not in self.bpe.token_to_id:
-                    self.bpe.add_token(num_token)
+                num_token = text[i:j]
+                if num_token not in token_to_id:
+                    add_token(num_token)
                 tokens.append(num_token)
                 i = j
                 matched = True
-            
-            
-            elif text[i:i+4] in ('http', 'www.', 'ftp:'):
-                j = i
-                while j < length and text[j] not in ' \t\n\r':
-                    j += 1
-                url_token = text[i:j]
-                if url_token not in self.bpe.token_to_id:
-                    self.bpe.add_token(url_token)
-                tokens.append(url_token)
-                i = j
-                matched = True
-            
-            
-            elif '@' in text[i:i+50] and '.' in text[i:i+50]:
                 
-                j = i
-                while j < length and text[j] not in ' \t\n\r':
-                    if '@' in text[i:j] and '.' in text[i:j]:
-                        break
-                    j += 1
-                if '@' in text[i:j] and '.' in text[i:j]:
-                    email_token = text[i:j]
-                    if email_token not in self.bpe.token_to_id:
-                        self.bpe.add_token(email_token)
-                    tokens.append(email_token)
-                    i = j
-                    matched = True
-            
-            
-            elif text[i].isalpha() or text[i] == '_':
-                j = i
+            elif char.isalpha() or char == '_':
+                # Enhanced identifier tokenization
+                j = i + 1
                 while j < length and (text[j].isalnum() or text[j] == '_'):
                     j += 1
                 identifier = text[i:j]
                 
-                if len(identifier) > 1:
-                    if identifier not in self.bpe.token_to_id:
-                        self.bpe.add_token(identifier)
-                    tokens.append(identifier)
+                # Smart compression: add longer identifiers to vocab
+                if len(identifier) > 1 and identifier not in token_to_id:
+                    add_token(identifier)
+                tokens.append(identifier)
+                i = j
+                matched = True
+                
+            elif char == 'h' and i + 3 < length and text[i:i+4] == 'http':
+                # Enhanced URL detection
+                j = i
+                while j < length and text[j] not in ' \t\n\r':
+                    j += 1
+                url_token = text[i:j]
+                if url_token not in token_to_id:
+                    add_token(url_token)
+                tokens.append(url_token)
+                i = j
+                matched = True
+                
+            elif char == 'w' and i + 3 < length and text[i:i+4] == 'www.':
+                # www URLs
+                j = i
+                while j < length and text[j] not in ' \t\n\r':
+                    j += 1
+                url_token = text[i:j]
+                if url_token not in token_to_id:
+                    add_token(url_token)
+                tokens.append(url_token)
+                i = j
+                matched = True
+                
+            elif char == '@':
+                # Enhanced email detection
+                j = i + 1
+                while j < length and text[j] not in ' \t\n\r':
+                    j += 1
+                potential_email = text[i:j]
+                if '.' in potential_email and len(potential_email) > 3:
+                    if potential_email not in token_to_id:
+                        add_token(potential_email)
+                    tokens.append(potential_email)
+                    i = j
+                    matched = True
+                    
+            elif char in ' \t\n':
+                # Advanced whitespace and punctuation compression
+                j = i
+                ws_type = char
+                while j < length and text[j] == ws_type:
+                    j += 1
+                ws_token = text[i:j]
+                
+                # Compress common whitespace patterns
+                if len(ws_token) > 1:
+                    if ws_token not in token_to_id:
+                        add_token(ws_token)
+                    tokens.append(ws_token)
+                    i = j
+                    matched = True
+                    
+            elif char in '.,!?;:()[]{}"\'-':
+                # Smart punctuation compression
+                j = i
+                punct_start = char
+                while j < length and text[j] in '.,!?;:()[]{}"\'-':
+                    j += 1
+                punct_token = text[i:j]
+                
+                # Compress punctuation runs for better efficiency
+                if len(punct_token) > 1:
+                    if punct_token not in token_to_id:
+                        add_token(punct_token)
+                    tokens.append(punct_token)
                     i = j
                     matched = True
             
             if not matched:
-                
-                best_token, _, best_len = self.bpe.trie.longest_match(text, i)
+                # EFFICIENCY: Try multi-character compression before single chars
+                best_token, _, best_len = trie_longest_match(text, i)
                 if best_len > 0:
                     tokens.append(best_token)
                     i += best_len
                 else:
-                    
-                    tokens.append(text[i])
-                    i += 1
+                    # SMART: Look for common 2-3 character patterns for compression
+                    if i + 1 < length:
+                        two_char = text[i:i+2]
+                        if two_char in ['th', 'he', 'in', 'er', 'an', 're', 'ed', 'nd', 'ha', 'et', 'sa', 'ou', 'it', 'is', 'or', 'ti', 'as', 'to', 'le', 'st', 'ar', 'nt', 'en', 'ta', 'io', 'ne', 'on', 'at', 'se']:
+                            if two_char not in token_to_id:
+                                add_token(two_char)
+                            tokens.append(two_char)
+                            i += 2
+                        elif i + 2 < length:
+                            three_char = text[i:i+3]
+                            if three_char in ['the', 'and', 'ing', 'ion', 'tio', 'ent', 'ive', 'for', 'ith', 'her', 'his', 'ter', 'est', 'ers', 'pro', 'res', 'com', 'con']:
+                                if three_char not in token_to_id:
+                                    add_token(three_char)
+                                tokens.append(three_char)
+                                i += 3
+                            else:
+                                tokens.append(char)
+                                i += 1
+                        else:
+                            tokens.append(char)
+                            i += 1
+                    else:
+                        tokens.append(char)
+                        i += 1
 
         return tokens
 
@@ -772,44 +861,51 @@ class HyperTokenizer16k:
     def encode(self, text: str, add_bos: bool = False, context: Optional[str] = None,
                use_lattice: bool = False, use_subsample: bool = False) -> List[int]:
         text = ensure_text(text)
-        if text == "":
+        if not text:
             return []
 
-        
-        cache_key = (hash(text), add_bos, bool(context), use_lattice, use_subsample)
-        if cache_key in self.encode_cache:
-            return list(self.encode_cache[cache_key])
+        # SMART: Simple caching strategy
+        cache_key = (hash(text), add_bos, use_lattice, use_subsample)
+        cached_result = self.encode_cache.get(cache_key)
+        if cached_result is not None:
+            return cached_result[:]
 
-        
+        # SPEED: Direct tokenization
         token_strs = self._ultra_fast_tokenize(text)
 
+        # SPEED: Efficient token ID conversion
+        ids = []
+        token_to_id = self.bpe.token_to_id
+        add_token = self.bpe.add_token
         
-        ids: List[int] = []
         if add_bos:
-            ids.append(self.bpe.token_id("<bos>"))
+            ids.append(token_to_id["<bos>"])
 
-        
+        # OPTIMIZED: Fast token ID lookup with minimal branching
         for token in token_strs:
-            token_id = self.bpe.token_to_id.get(token)
+            token_id = token_to_id.get(token)
             if token_id is not None:
                 ids.append(token_id)
             else:
-                
-                if len(token) == 1 and ord(token) > 127:
-                    if token not in self.bpe.token_to_id:
-                        self.bpe.add_token(token, frequency=1)
-                    ids.append(self.bpe.token_to_id[token])
+                # Fast fallback handling
+                if len(token) == 1:
+                    if ord(token) > 127:
+                        if token not in token_to_id:
+                            add_token(token, frequency=1)
+                        ids.append(token_to_id[token])
+                    else:
+                        ids.append(token_to_id.get(token, token_to_id.get("<unk>", 0)))
                 else:
-                    
+                    # Byte fallback for multi-char tokens
                     for b in utf8_bytes_of(token):
-                        ids.append(self.bpe.token_to_id[f"<b{b:02x}>"])
+                        ids.append(token_to_id.get(f"<b{b:02x}>", 0))
 
         if add_bos:  
-            ids.append(self.bpe.token_id("<eos>"))
+            ids.append(token_to_id["<eos>"])
 
-        
+        # Cache result
         self.encode_cache[cache_key] = ids
-        return list(ids)
+        return ids
 
     def decode(self, token_ids: List[int], skip_specials: bool = True, pretty: bool = False) -> str:
         if not token_ids:

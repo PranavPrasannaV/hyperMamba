@@ -6,6 +6,7 @@ import random
 import string
 from hypertokenizer_16k import HyperTokenizer16k
 
+
 PKL_PATH = "ultra_hyper_tokenizer_16k.pkl"
 
 def benchmark_tokenizer(tok, text):
