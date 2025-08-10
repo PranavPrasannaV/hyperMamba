@@ -1395,23 +1395,78 @@ if __name__ == "__main__":
 
     training_corpus = []
 
-    
-    for _ in range(100):  
+    # SMART: Balanced approach - moderate increase with quality focus
+    for _ in range(120):  # Moderate increase from 100 to 120
         training_corpus.extend(sample_texts)
 
-    
-    domain_examples = [
+    # CURATED: High-quality diverse examples focused on compression patterns
+    compression_focused_examples = [
+        # High-compression programming patterns
         "import torch; model = torch.nn.TransformerEncoder(layers)",
+        "def fibonacci(n): return n if n <= 1 else fibonacci(n-1) + fibonacci(n-2)",
+        "const apiResponse = await fetch('/api/users').then(res => res.json());",
+        
+        # Efficient SQL patterns
         "SELECT * FROM users WHERE active = 1 ORDER BY created_at DESC",
-        "function calculateDistance(x1, y1, x2, y2) { return Math.sqrt((x2-x1)**2 + (y2-y1)**2); }",
-        "The advancement of machine learning and deep learning technologies",
+        "INSERT INTO products (name, price, category) VALUES ('Laptop', 999.99, 'Electronics')",
+        
+        # Web patterns with good compression
+        "<div class='container'><h1>Welcome</h1><p>Get started!</p></div>",
+        "body { font-family: Arial; margin: 0; padding: 20px; }",
+        
+        # Technical content with common patterns
         "Neural networks utilize backpropagation for gradient-based optimization",
-        "Convolutional neural networks excel at computer vision tasks",
-        "Natural language processing enables human-computer communication",
+        "The algorithm achieves O(n log n) time complexity with optimal space usage",
+        
+        # URL and identifier patterns for compression
+        "Visit https://www.example.com/docs/api/v2/reference for documentation",
+        "Contact support@company.com or call +1-555-123-4567 for assistance",
+        
+        # Version and numeric patterns
+        "Version 2.1.3-beta.4 released with performance improvements",
+        "Processing 1,234,567 records at 99.7% accuracy with 0.003ms latency",
+        
+        # Common business patterns
+        "Meeting scheduled for 2024-01-15 at 2:30 PM in Conference Room A",
+        "Project milestone: 95% completion rate with zero critical bugs",
     ]
 
-    for _ in range(150):
-        training_corpus.extend(domain_examples)
+    # QUALITY-FOCUSED: Fewer iterations but better diversity (150 -> 180)
+    for _ in range(180):
+        training_corpus.extend(compression_focused_examples)
+        
+    # ADD: Unique high-value patterns (no repetition)
+    unique_patterns = [
+        # Common English patterns for better compression
+        "the quick brown fox jumps over the lazy dog",
+        "she sells seashells by the seashore",
+        "how much wood would a woodchuck chuck",
+        "peter piper picked a peck of pickled peppers",
+        
+        # Technical abbreviations and acronyms
+        "API REST JSON HTTP HTTPS SSL TLS TCP UDP IP DNS",
+        "CPU GPU RAM SSD HDD USB HDMI WiFi Bluetooth",
+        "HTML CSS JS PHP SQL XML CSV PDF PNG JPG",
+        
+        # Common code patterns
+        "if __name__ == '__main__':",
+        "public static void main(String[] args)",
+        "function(req, res, next) {",
+        "try { } catch (error) { }",
+        
+        # Date and time patterns
+        "2024-01-15T14:30:25.123Z",
+        "Mon, 15 Jan 2024 14:30:25 GMT",
+        "January 15, 2024 at 2:30 PM",
+        
+        # Common punctuation and formatting
+        "... --- *** !!! ??? === >>>",
+        "() [] {} <> \"\" '' `` ~~",
+        "@ # $ % ^ & * + = | \\ / ?",
+    ]
+    
+    # Add unique patterns once only
+    training_corpus.extend(unique_patterns)
 
     print(f"Training corpus: {len(training_corpus)} documents")
 
