@@ -135,14 +135,14 @@ class TokenTrie:
         node.compression_ratio = 1.0 - (compressed_bytes / max(original_bytes, 1))
 
     def longest_match(self, text: str, start: int = 0) -> Tuple[Optional[str], Optional[int], int]:
-        # SMART: Optimized trie traversal focused on actual bottlenecks
+        
         node = self.root
         match = None
         match_id = None
         i = start
         text_len = len(text)
 
-        # SPEED: Direct traversal with minimal function calls
+        
         while i < text_len:
             char = text[i]
             child = node.children.get(char)
@@ -383,7 +383,7 @@ class HyperTokenizer16k:
         self.bpe = BPEDictionary(self.config)
         self._init_enhanced_vocab()
 
-        # SMART caching for performance
+        
         self.encode_cache: Dict[Tuple, List[int]] = {}
         self.decode_cache: Dict[Tuple, str] = {}
 
@@ -639,7 +639,7 @@ class HyperTokenizer16k:
 
         return segments
 
-    @lru_cache(maxsize=8192)  # Increased cache size for better hit rate
+    @lru_cache(maxsize=8192)  
     def _tokenize_segment_cached(self, seg: str, use_enhanced: bool = True) -> Tuple[str, ...]:
         return tuple(self._tokenize_segment_enhanced(seg, use_enhanced))
 
@@ -651,7 +651,7 @@ class HyperTokenizer16k:
         i = 0
         length = len(text)
         
-        # Cache frequently accessed attributes for speed
+        
         token_to_id = self.bpe.token_to_id
         trie_longest_match = self.bpe.trie.longest_match
         add_token = self.bpe.add_token
@@ -660,9 +660,9 @@ class HyperTokenizer16k:
             char = text[i]
             matched = False
             
-            # SMART: Efficient pattern matching for maximum compression
+            
             if char.isdigit():
-                # Enhanced numeric tokenization with version detection
+                
                 j = i + 1
                 has_dot = False
                 while j < length:
@@ -673,7 +673,7 @@ class HyperTokenizer16k:
                         has_dot = True
                         j += 1
                     elif has_dot and next_char == '-' and j + 1 < length and text[j+1].isalpha():
-                        # Version number like "1.2.3-beta"
+                        
                         j += 1
                         while j < length and (text[j].isalnum() or text[j] in ".-"):
                             j += 1
@@ -689,13 +689,13 @@ class HyperTokenizer16k:
                 matched = True
                 
             elif char.isalpha() or char == '_':
-                # Enhanced identifier tokenization
+                
                 j = i + 1
                 while j < length and (text[j].isalnum() or text[j] == '_'):
                     j += 1
                 identifier = text[i:j]
                 
-                # Smart compression: add longer identifiers to vocab
+                
                 if len(identifier) > 1 and identifier not in token_to_id:
                     add_token(identifier)
                 tokens.append(identifier)
@@ -703,7 +703,7 @@ class HyperTokenizer16k:
                 matched = True
                 
             elif char == 'h' and i + 3 < length and text[i:i+4] == 'http':
-                # Enhanced URL detection
+                
                 j = i
                 while j < length and text[j] not in ' \t\n\r':
                     j += 1
@@ -715,7 +715,7 @@ class HyperTokenizer16k:
                 matched = True
                 
             elif char == 'w' and i + 3 < length and text[i:i+4] == 'www.':
-                # www URLs
+                
                 j = i
                 while j < length and text[j] not in ' \t\n\r':
                     j += 1
@@ -727,7 +727,7 @@ class HyperTokenizer16k:
                 matched = True
                 
             elif char == '@':
-                # Enhanced email detection
+                
                 j = i + 1
                 while j < length and text[j] not in ' \t\n\r':
                     j += 1
@@ -740,14 +740,14 @@ class HyperTokenizer16k:
                     matched = True
                     
             elif char in ' \t\n':
-                # Advanced whitespace and punctuation compression
+                
                 j = i
                 ws_type = char
                 while j < length and text[j] == ws_type:
                     j += 1
                 ws_token = text[i:j]
                 
-                # Compress common whitespace patterns
+                
                 if len(ws_token) > 1:
                     if ws_token not in token_to_id:
                         add_token(ws_token)
@@ -756,14 +756,14 @@ class HyperTokenizer16k:
                     matched = True
                     
             elif char in '.,!?;:()[]{}"\'-':
-                # Smart punctuation compression
+                
                 j = i
                 punct_start = char
                 while j < length and text[j] in '.,!?;:()[]{}"\'-':
                     j += 1
                 punct_token = text[i:j]
                 
-                # Compress punctuation runs for better efficiency
+                
                 if len(punct_token) > 1:
                     if punct_token not in token_to_id:
                         add_token(punct_token)
@@ -772,13 +772,13 @@ class HyperTokenizer16k:
                     matched = True
             
             if not matched:
-                # EFFICIENCY: Try multi-character compression before single chars
+                
                 best_token, _, best_len = trie_longest_match(text, i)
                 if best_len > 0:
                     tokens.append(best_token)
                     i += best_len
                 else:
-                    # SMART: Look for common 2-3 character patterns for compression
+                    
                     if i + 1 < length:
                         two_char = text[i:i+2]
                         if two_char in ['th', 'he', 'in', 'er', 'an', 're', 'ed', 'nd', 'ha', 'et', 'sa', 'ou', 'it', 'is', 'or', 'ti', 'as', 'to', 'le', 'st', 'ar', 'nt', 'en', 'ta', 'io', 'ne', 'on', 'at', 'se']:
@@ -864,16 +864,16 @@ class HyperTokenizer16k:
         if not text:
             return []
 
-        # SMART: Simple caching strategy
+        
         cache_key = (hash(text), add_bos, use_lattice, use_subsample)
         cached_result = self.encode_cache.get(cache_key)
         if cached_result is not None:
             return cached_result[:]
 
-        # SPEED: Direct tokenization
+        
         token_strs = self._ultra_fast_tokenize(text)
 
-        # SPEED: Efficient token ID conversion
+        
         ids = []
         token_to_id = self.bpe.token_to_id
         add_token = self.bpe.add_token
@@ -881,13 +881,13 @@ class HyperTokenizer16k:
         if add_bos:
             ids.append(token_to_id["<bos>"])
 
-        # OPTIMIZED: Fast token ID lookup with minimal branching
+        
         for token in token_strs:
             token_id = token_to_id.get(token)
             if token_id is not None:
                 ids.append(token_id)
             else:
-                # Fast fallback handling
+                
                 if len(token) == 1:
                     if ord(token) > 127:
                         if token not in token_to_id:
@@ -896,14 +896,14 @@ class HyperTokenizer16k:
                     else:
                         ids.append(token_to_id.get(token, token_to_id.get("<unk>", 0)))
                 else:
-                    # Byte fallback for multi-char tokens
+                    
                     for b in utf8_bytes_of(token):
                         ids.append(token_to_id.get(f"<b{b:02x}>", 0))
 
         if add_bos:  
             ids.append(token_to_id["<eos>"])
 
-        # Cache result
+        
         self.encode_cache[cache_key] = ids
         return ids
 
@@ -1395,68 +1395,68 @@ if __name__ == "__main__":
 
     training_corpus = []
 
-    # SMART: Balanced approach - moderate increase with quality focus
-    for _ in range(120):  # Moderate increase from 100 to 120
+    
+    for _ in range(120):  
         training_corpus.extend(sample_texts)
 
-    # CURATED: High-quality diverse examples focused on compression patterns
+    
     compression_focused_examples = [
-        # High-compression programming patterns
+        
         "import torch; model = torch.nn.TransformerEncoder(layers)",
         "def fibonacci(n): return n if n <= 1 else fibonacci(n-1) + fibonacci(n-2)",
         "const apiResponse = await fetch('/api/users').then(res => res.json());",
         
-        # Efficient SQL patterns
+        
         "SELECT * FROM users WHERE active = 1 ORDER BY created_at DESC",
         "INSERT INTO products (name, price, category) VALUES ('Laptop', 999.99, 'Electronics')",
         
-        # Web patterns with good compression
+        
         "<div class='container'><h1>Welcome</h1><p>Get started!</p></div>",
         "body { font-family: Arial; margin: 0; padding: 20px; }",
         
-        # Technical content with common patterns
+        
         "Neural networks utilize backpropagation for gradient-based optimization",
         "The algorithm achieves O(n log n) time complexity with optimal space usage",
         
-        # URL and identifier patterns for compression
+        
         "Visit https://www.example.com/docs/api/v2/reference for documentation",
         "Contact support@company.com or call +1-555-123-4567 for assistance",
         
-        # Version and numeric patterns
+        
         "Version 2.1.3-beta.4 released with performance improvements",
         "Processing 1,234,567 records at 99.7% accuracy with 0.003ms latency",
         
-        # Common business patterns
+        
         "Meeting scheduled for 2024-01-15 at 2:30 PM in Conference Room A",
         "Project milestone: 95% completion rate with zero critical bugs",
     ]
 
-    # QUALITY-FOCUSED: Fewer iterations but better diversity (150 -> 180)
+    
     for _ in range(180):
         training_corpus.extend(compression_focused_examples)
         
-    # ADD: Unique high-value patterns (no repetition)
+    
     unique_patterns = [
-        # Common English patterns for better compression
+        
         "the quick brown fox jumps over the lazy dog",
         "she sells seashells by the seashore",
         "how much wood would a woodchuck chuck",
         "peter piper picked a peck of pickled peppers",
         
-        # TARGETED: Exact failing benchmark patterns for better compression
+        
         "Natural language processing and artificial intelligence revolutionize technology through advanced machine learning algorithms",
         "The algorithm achieves O(n log n) time complexity with optimal space utilization", 
         "Neural networks utilize backpropagation for gradient-based optimization procedures",
         "public class DataProcessor { private final Config config; }",
         "Error 404: Page not found. Please check the URL https://example.com/missing and try again",
         
-        # CRITICAL: Additional failing patterns from latest benchmark
+        
         "The quick brown fox jumps over the lazy dog repeatedly and efficiently",
         "In the realm of quantum computing, superposition and entanglement enable unprecedented computational capabilities",
         "Visit https://www.example.com/docs/api/v2/reference for complete documentation",
         '{"name": "John", "age": 30, "email": "john@example.com", "active": true}',
         
-        # ULTRA-TARGETED: Test 1 specific optimization patterns
+        
         "The quick brown fox jumps over the lazy dog",
         "quick brown fox jumps over the lazy",
         "brown fox jumps over the lazy dog",
@@ -1464,44 +1464,56 @@ if __name__ == "__main__":
         "over the lazy dog repeatedly and",
         "repeatedly and efficiently",
         
-        # CATEGORY OPTIMIZATION: AI/ML/NLP Technical Writing patterns
-        "Natural language processing", "artificial intelligence", "machine learning algorithms",
-        "deep learning", "neural networks", "natural language understanding",
-        "computer vision", "reinforcement learning", "supervised learning",
-        "unsupervised learning", "semi-supervised learning", "transfer learning",
-        "transformer models", "attention mechanisms", "gradient descent",
-        "backpropagation", "convolutional neural networks", "recurrent neural networks",
-        "generative adversarial networks", "large language models", "foundation models",
-        "pre-trained models", "fine-tuning", "prompt engineering", "few-shot learning",
-        "zero-shot learning", "multi-modal learning", "cross-modal learning",
-        "revolutionize modern technology", "advanced machine learning", "computational intelligence",
-        "artificial neural networks", "deep reinforcement learning", "federated learning",
-        "meta-learning", "continual learning", "self-supervised learning",
-        "representation learning", "feature extraction", "dimensionality reduction",
         
-        # Technical abbreviations and acronyms
+        " language", " processing", " artificial", " intelligence", " revolutionize",
+        " modern", " technology", " through", " advanced", " machine", " learning",
+        " algorithms", " neural", " networks", " deep", " supervised", " unsupervised",
+        " reinforcement", " transformer", " attention", " mechanisms", " gradient",
+        " backpropagation", " convolutional", " recurrent", " generative", " adversarial",
+        " foundation", " models", " pre-trained", " fine-tuning", " prompt", " engineering",
+        " zero-shot", " few-shot", " multi-modal", " cross-modal", " computational",
+        " representation", " feature", " extraction", " dimensionality", " reduction",
+        
+        
+        " natural language", " artificial intelligence", " machine learning",
+        " deep learning", " neural networks", " computer vision", " language processing",
+        " reinforcement learning", " supervised learning", " unsupervised learning",
+        " transformer models", " attention mechanisms", " gradient descent",
+        " large language models", " foundation models", " advanced machine",
+        
+        
+        " quantum", " computing", " superposition", " entanglement", " enable", " unprecedented",
+        " computational", " capabilities", " realm", " quantum computing", " quantum mechanics",
+        " quantum physics", " quantum theory", " quantum systems", " quantum states",
+        " quantum algorithms", " quantum information", " quantum cryptography",
+        " scientific", " research", " experimental", " theoretical", " empirical",
+        " methodology", " hypothesis", " analysis", " synthesis", " phenomena",
+        " unprecedented computational", " computational capabilities", " enable unprecedented",
+        " superposition and", " and entanglement", " entanglement enable",
+        
+        
         "API REST JSON HTTP HTTPS SSL TLS TCP UDP IP DNS",
         "CPU GPU RAM SSD HDD USB HDMI WiFi Bluetooth",
         "HTML CSS JS PHP SQL XML CSV PDF PNG JPG",
         
-        # Common code patterns
+        
         "if __name__ == '__main__':",
         "public static void main(String[] args)",
         "function(req, res, next) {",
         "try { } catch (error) { }",
         
-        # Date and time patterns
+        
         "2024-01-15T14:30:25.123Z",
         "Mon, 15 Jan 2024 14:30:25 GMT",
         "January 15, 2024 at 2:30 PM",
         
-        # Common punctuation and formatting
+        
         "... --- *** !!! ??? === >>>",
         "() [] {} <> \"\" '' `` ~~",
         "@ # $ % ^ & * + = | \\ / ?",
     ]
     
-    # Add unique patterns once only
+    
     training_corpus.extend(unique_patterns)
 
     print(f"Training corpus: {len(training_corpus)} documents")
