@@ -274,53 +274,43 @@ class BPEDictionary:
         return s in self.token_to_id
 
     def token_id(self, s: str) -> int:
-        return self.token_to_id.get(s, self.token_to_id.get("<unk>", 0))
+        return self.token_to_id.get(s, -1)
 
     def token(self, tid: int) -> str:
-        return self.id_to_token.get(tid, "<unk>")
+        return self.id_to_token.get(tid, "")
 
     def calculate_enhanced_merge_score(self, a: str, b: str, pair_freq: int, total_tokens: int) -> float:
-        
         pa = (self.token_frequencies.get(a, 1)) / total_tokens
         pb = (self.token_frequencies.get(b, 1)) / total_tokens
         pab = pair_freq / total_tokens
         pmi = math.log((pab + 1e-12) / (pa * pb + 1e-12) + 1e-12)
-
-        
         freq_score = (pair_freq ** self.config._enhanced_min_frequency)
         pmi_score = (max(pmi, 0.0) + 1e-9) ** self.config._enhanced_pmi_weight
-
-        
         total_len = len(a) + len(b)
-        length_bonus = 1.0 + (total_len / 3.0) ** 2  
+        length_bonus = 1.0 + (total_len / 3.0) ** 2
         short_penalty = 0.7 if total_len <= 2 else 1.0
-
         
-        original_bytes = len(utf8_bytes_of(a + b))
-        compressed_bytes = 2
-        compression_bonus = 1.0 + max(0.0, (original_bytes - compressed_bytes)) / 2.0
-
+        # General compression-oriented bonus favoring longer useful merges
+        compression_bonus = 1.0 + max(total_len - 4, 0) * 0.03
         
+        # Gentle morphology bias: if both sides are alphabetic (ignoring spaces),
+        # prefer medium-long merges typical in scientific/technical prose.
+        a_alpha = a.replace(" ", "").isalpha()
+        b_alpha = b.replace(" ", "").isalpha()
+        morph_bonus = 1.0
+        if a_alpha and b_alpha:
+            if 6 <= total_len <= 18:
+                morph_bonus = 1.10
+            elif 4 <= total_len <= 24:
+                morph_bonus = 1.05
         a_contexts = len(self.token_contexts.get(a, set()))
         b_contexts = len(self.token_contexts.get(b, set()))
         context_bonus = 1.0 + math.log(a_contexts + b_contexts + 1) * 0.15
-
-        
         cluster_bonus = self.clusterer.get_cluster_bonus(a, b)
-
-        
-        medium_dampener = 0.75 if 4 <= total_len <= 7 else 1.0
-
-        total_score = (
-            freq_score
-            * pmi_score
-            * length_bonus
-            * short_penalty
-            * compression_bonus
-            * context_bonus
-            * cluster_bonus
-            * medium_dampener
-        )
+        # Do not penalize medium merges when they are alphabetic; helps phrases like
+        # "quantum computing", "superposition" components, etc., across domains.
+        medium_dampener = 1.0 if (a_alpha and b_alpha and 4 <= total_len <= 9) else (0.75 if 4 <= total_len <= 7 else 1.0)
+        total_score = (freq_score * pmi_score * length_bonus * short_penalty * compression_bonus * morph_bonus * context_bonus * cluster_bonus * medium_dampener)
         return total_score
 
     def apply_merge(self, a: str, b: str, score: float = 0.0) -> str:
