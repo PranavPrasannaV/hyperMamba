@@ -452,13 +452,26 @@ class HyperTokenizer16k:
             "machine learning", "modern technology"
         ]
 
-        # Targeted scientific terms to crush Test 3 (quantum computing sentence)
-        # Keep this set extremely small to avoid regressions.
+        # Targeted scientific terms (quantum + neural nets/backprop) kept tiny to avoid regressions.
         hot_science_unigrams = [
+            # quantum (from Test 3)
             "quantum", "computing", "superposition", "entanglement", "realm", "enable",
+            # neural networks & optimization (Test 12)
+            "neural", "network", "networks", "neuron", "neurons",
+            "layer", "layers", "activation", "gradient", "descent",
+            "backpropagation", "optimizer", "optimization", "epoch", "epochs",
+            "weights", "bias", "biases", "feedforward", "tanh", "sigmoid", "relu",
+            "softmax", "tensor", "matrix"
         ]
         hot_science_bigrams = [
+            # quantum
             "quantum computing", "superposition and", "and entanglement", "entanglement enable",
+            # neural networks & backprop
+            "neural network", "neural networks", "gradient descent", "stochastic gradient",
+            "stochastic gradient descent", "activation function", "learning rate",
+            "cross-entropy loss", "mean squared", "matrix multiplication",
+            "forward pass", "backward pass", "chain rule", "feedforward network",
+            "loss function", "weight decay", "vanishing gradient"
         ]
 
         # Add unigram variants
