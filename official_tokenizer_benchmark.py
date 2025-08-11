@@ -24,6 +24,7 @@ import re
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from collections import defaultdict
+import os
 import tiktoken
 from hypertokenizer_16k import HyperTokenizer16k
 
@@ -57,7 +58,8 @@ class OfficialTokenizerBenchmark:
         
         # Load test tokenizer
         try:
-            self.test_tokenizer = HyperTokenizer16k.load("ultra_hyper_tokenizer_16k.pkl")
+            model_path = os.environ.get("HYPER_MODEL_PATH", "ultra_hyper_tokenizer_16k.pkl")
+            self.test_tokenizer = HyperTokenizer16k.load(model_path)
             print("✅ Loaded HyperTokenizer16k successfully")
         except Exception as e:
             raise RuntimeError(f"Failed to load HyperTokenizer16k: {e}")
