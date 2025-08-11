@@ -286,31 +286,69 @@ class BPEDictionary:
         pmi = math.log((pab + 1e-12) / (pa * pb + 1e-12) + 1e-12)
         freq_score = (pair_freq ** self.config._enhanced_min_frequency)
         pmi_score = (max(pmi, 0.0) + 1e-9) ** self.config._enhanced_pmi_weight
+
         total_len = len(a) + len(b)
         length_bonus = 1.0 + (total_len / 3.0) ** 2
-        short_penalty = 0.7 if total_len <= 2 else 1.0
-        
+        short_penalty = 0.75 if total_len <= 2 else 1.0
+
         # General compression-oriented bonus favoring longer useful merges
-        compression_bonus = 1.0 + max(total_len - 4, 0) * 0.03
-        
-        # Gentle morphology bias: if both sides are alphabetic (ignoring spaces),
-        # prefer medium-long merges typical in scientific/technical prose.
-        a_alpha = a.replace(" ", "").isalpha()
-        b_alpha = b.replace(" ", "").isalpha()
+        compression_bonus = 1.0 + max(total_len - 5, 0) * 0.035
+
+        # Alphabetic characteristics (ignore spaces)
+        a_clean = a.replace(" ", "")
+        b_clean = b.replace(" ", "")
+        a_alpha = a_clean.isalpha()
+        b_alpha = b_clean.isalpha()
+
+        # Gentle morphology/technical bias for alphabetic wordpieces
         morph_bonus = 1.0
         if a_alpha and b_alpha:
-            if 6 <= total_len <= 18:
-                morph_bonus = 1.10
-            elif 4 <= total_len <= 24:
+            if 6 <= total_len <= 20:
+                morph_bonus = 1.12
+            elif 4 <= total_len <= 26:
                 morph_bonus = 1.05
+
+        # Hyphen-aware slight boost for compounds common in technical text (e.g., "multi-", "state-of-the-art")
+        hyphen_bonus = 1.0
+        if ('-' in a or '-' in b) and (a_alpha or b_alpha):
+            hyphen_bonus = 1.05
+
+        # Light penalty for punctuation-heavy merges to protect URLs/JSON/emails
+        def punct_ratio(s: str) -> float:
+            if not s:
+                return 0.0
+            punct = sum(ch in "{}[]()<>:/\\@#?&=,;\"'`" for ch in s)
+            return punct / max(1, len(s))
+
+        punct_penalty = 1.0
+        pr = (punct_ratio(a) + punct_ratio(b)) / 2.0
+        if pr > 0.15:
+            punct_penalty = 0.9
+
+        # Context diversity bonus (more diverse usage tends to be good merges)
         a_contexts = len(self.token_contexts.get(a, set()))
         b_contexts = len(self.token_contexts.get(b, set()))
-        context_bonus = 1.0 + math.log(a_contexts + b_contexts + 1) * 0.15
+        context_bonus = 1.0 + math.log(a_contexts + b_contexts + 1) * 0.12
+
+        # Cluster coherence
         cluster_bonus = self.clusterer.get_cluster_bonus(a, b)
-        # Do not penalize medium merges when they are alphabetic; helps phrases like
-        # "quantum computing", "superposition" components, etc., across domains.
-        medium_dampener = 1.0 if (a_alpha and b_alpha and 4 <= total_len <= 9) else (0.75 if 4 <= total_len <= 7 else 1.0)
-        total_score = (freq_score * pmi_score * length_bonus * short_penalty * compression_bonus * morph_bonus * context_bonus * cluster_bonus * medium_dampener)
+
+        # Do not penalize medium merges when they are alphabetic; expand safe window a bit
+        medium_dampener = 1.0 if (a_alpha and b_alpha and 4 <= total_len <= 12) else (0.8 if 4 <= total_len <= 7 else 1.0)
+
+        total_score = (
+            freq_score
+            * pmi_score
+            * length_bonus
+            * short_penalty
+            * compression_bonus
+            * morph_bonus
+            * hyphen_bonus
+            * punct_penalty
+            * context_bonus
+            * cluster_bonus
+            * medium_dampener
+        )
         return total_score
 
     def apply_merge(self, a: str, b: str, score: float = 0.0) -> str:
