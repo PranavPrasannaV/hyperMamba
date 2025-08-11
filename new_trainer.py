@@ -826,6 +826,25 @@ class HyperTokenizer16k:
             char = text[i]
             matched = False
             
+            # Fast path: Big-O notation like O(n), O(n log n), O(log n), O(n^2)
+            # Keep this before generic alpha handling to avoid fragmenting.
+            if char == 'O' and i + 1 < length and text[i+1] == '(':  # typical Big-O start
+                j = i + 2
+                # Allow typical math symbols, spaces, and identifiers inside the parens
+                allowed = set('abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_ +-*/^.')
+                while j < length and text[j] in allowed:
+                    j += 1
+                if j < length and text[j] == ')':
+                    j += 1  # include closing ')'
+                    big_o = text[i:j]
+                    # Sanity bounds to avoid pathological greediness
+                    if 3 <= len(big_o) <= 40:
+                        if big_o not in token_to_id:
+                            add_token(big_o)
+                        tokens.append(big_o)
+                        i = j
+                        matched = True
+                        
             
             if char.isdigit():
                 
@@ -861,36 +880,95 @@ class HyperTokenizer16k:
                     j += 1
                 identifier = text[i:j]
                 
+                # If a single space follows, merge it to reduce tokens (common in production tokenizers)
+                if j < length and text[j] == ' ':
+                    merged = text[i:j+1]
+                    if len(identifier) > 1 and merged not in token_to_id:
+                        add_token(merged)
+                    tokens.append(merged)
+                    i = j + 1
+                    matched = True
+                else:
+                    if len(identifier) > 1 and identifier not in token_to_id:
+                        add_token(identifier)
+                    tokens.append(identifier)
+                    i = j
+                    matched = True
                 
-                if len(identifier) > 1 and identifier not in token_to_id:
-                    add_token(identifier)
-                tokens.append(identifier)
-                i = j
-                matched = True
-                
-            elif char == 'h' and i + 3 < length and text[i:i+4] == 'http':
-                
+            elif ((char == 'h' and i + 3 < length and text[i:i+4] == 'http') or
+                  (char == 'w' and i + 3 < length and text[i:i+4] == 'www.')):
+                # Robust, regex-free URL capture
                 j = i
                 while j < length and text[j] not in ' \t\n\r':
                     j += 1
-                url_token = text[i:j]
-                if url_token not in token_to_id:
-                    add_token(url_token)
-                tokens.append(url_token)
-                i = j
-                matched = True
-                
-            elif char == 'w' and i + 3 < length and text[i:i+4] == 'www.':
-                
-                j = i
-                while j < length and text[j] not in ' \t\n\r':
-                    j += 1
-                url_token = text[i:j]
-                if url_token not in token_to_id:
-                    add_token(url_token)
-                tokens.append(url_token)
-                i = j
-                matched = True
+                full_url = text[i:j]
+                # Trim common trailing punctuation that may follow URLs in prose
+                trim_chars = '),.;:"\']'
+                while len(full_url) > 0 and full_url[-1] in trim_chars:
+                    j -= 1
+                    full_url = text[i:j]
+                # If URL is moderate length, keep as single token
+                if 1 < len(full_url) <= 120:
+                    if full_url not in token_to_id:
+                        add_token(full_url)
+                    tokens.append(full_url)
+                    i = j
+                    matched = True
+                else:
+                    # Split very long URLs into large chunks: scheme+domain, then path segments
+                    # Find scheme and domain boundary ('://') and first slash after domain
+                    k = i
+                    # scheme://
+                    if text[k:k+8].lower().startswith('https://'):
+                        k += 8
+                        scheme = text[i:k]
+                    elif text[k:k+7].lower().startswith('http://'):
+                        k += 7
+                        scheme = text[i:k]
+                    else:
+                        scheme = ''
+                    # domain
+                    d_start = k
+                    while k < j and text[k] not in '/ \t\n\r':
+                        k += 1
+                    domain = text[d_start:k]
+                    # emit scheme+domain if present
+                    head = (scheme + domain) if scheme else (('www.' + domain[4:]) if domain.startswith('www.') else domain)
+                    if head:
+                        if head not in token_to_id:
+                            add_token(head)
+                        tokens.append(head)
+                    # path/query/fragment remainder in big segments
+                    p = k
+                    seg_start = p
+                    seg_count = 0
+                    while p < j:
+                        # accumulate until next '/' to keep directories as units
+                        if text[p] == '/':
+                            if p > seg_start:
+                                seg = text[seg_start:p]
+                                if seg and seg not in token_to_id:
+                                    add_token(seg)
+                                if seg:
+                                    tokens.append(seg)
+                                seg_count += 1
+                            # include the slash as its own short token to preserve structure
+                            if '/' not in token_to_id:
+                                add_token('/')
+                            tokens.append('/')
+                            p += 1
+                            seg_start = p
+                        else:
+                            p += 1
+                    # last tail segment
+                    if seg_start < j:
+                        tail = text[seg_start:j]
+                        if tail and tail not in token_to_id:
+                            add_token(tail)
+                        if tail:
+                            tokens.append(tail)
+                    i = j
+                    matched = True
                 
             elif char == '@':
                 

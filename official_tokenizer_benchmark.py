@@ -54,7 +54,7 @@ class OfficialTokenizerBenchmark:
     
     def __init__(self):
         self.results = []
-        self.reference_tokenizer = tiktoken.get_encoding("o200k_base")  # GPT-4o tokenizer
+        self.reference_tokenizer = tiktoken.get_encoding("o200k_base")  # GPT-5 tokenizer
         
         # Load test tokenizer
         try:
