@@ -769,6 +769,20 @@ class HyperTokenizer16k:
         for t in json_tokens:
             self.bpe.add_token(t)
 
+        # Common English stopwords with trailing space to improve NL compression
+        common_space_words = [
+            ' the ', ' The ', ' and ', ' of ', ' to ', ' in ', ' a ', ' is ', ' that ', ' with ',
+            ' for ', ' on ', ' as ', ' are ', ' it ', ' this ', ' by ', ' from ', ' at ', ' an ',
+            ' be ', ' or ', ' not ', ' we ', ' you ', ' they ', ' their ', ' our ', ' can ', ' will '
+        ]
+        # Also include leading/trailing variants for sentence starts/ends
+        boundary_space_words = [
+            'The ', 'the ', 'And ', 'and ', 'Of ', 'of ', 'To ', 'to ', 'In ', 'in ', 'A ', 'a ',
+            'Is ', 'is ', 'With ', 'with ', 'For ', 'for ', 'On ', 'on ', 'As ', 'as ', 'It ', 'it '
+        ]
+        for t in common_space_words + boundary_space_words:
+            self.bpe.add_token(t)
+
         
         code_tokens = [
             'function ', 'return ', 'const ', 'let ', 'var ', 'class ', 'import ', 'from ', 'export ', 'default ',
@@ -880,8 +894,52 @@ class HyperTokenizer16k:
                     j += 1
                 identifier = text[i:j]
                 
-                # If a single space follows, merge it to reduce tokens (common in production tokenizers)
+                # Optionally merge two short words into one token: "word1 word2[ ]"
+                # Conservative bounds to avoid over-merging; keeps hot path lean.
+                did_bigram_merge = False
                 if j < length and text[j] == ' ':
+                    w1_len = j - i
+                    if 2 <= w1_len <= 7:
+                        k = j + 1
+                        k2 = k
+                        while k2 < length and text[k2].isalpha():
+                            k2 += 1
+                        w2_len = k2 - k
+                        if 2 <= w2_len <= 7:
+                            # include optional trailing space or sentence punctuation
+                            k3 = k2
+                            if k3 < length and text[k3] in ' .,!?;:':
+                                # if punctuation, include optional following space
+                                if text[k3] in '.,!?;:':
+                                    k3 += 1
+                                    if k3 < length and text[k3] == ' ':
+                                        k3 += 1
+                                else:
+                                    # it's a space
+                                    k3 += 1
+                            merged2 = text[i:k3]
+                            if merged2 and merged2 not in token_to_id:
+                                add_token(merged2)
+                            tokens.append(merged2)
+                            i = k3
+                            matched = True
+                            did_bigram_merge = True
+                if did_bigram_merge:
+                    continue
+                # Prefer merging trailing sentence punctuation (and optional following space)
+                if j < length and text[j] in '.,!?;:':
+                    k = j + 1
+                    # Optionally include a single trailing space after punctuation
+                    if k < length and text[k] == ' ':
+                        k += 1
+                    merged = text[i:k]
+                    if len(identifier) > 1 and merged not in token_to_id:
+                        add_token(merged)
+                    tokens.append(merged)
+                    i = k
+                    matched = True
+                # Otherwise, if a single space follows, merge it to reduce tokens
+                elif j < length and text[j] == ' ':
                     merged = text[i:j+1]
                     if len(identifier) > 1 and merged not in token_to_id:
                         add_token(merged)
