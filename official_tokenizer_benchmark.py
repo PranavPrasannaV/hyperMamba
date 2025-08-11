@@ -19,14 +19,11 @@ Based on research from:
 
 import time
 import statistics
-import json
-import re
-from typing import Dict, List, Tuple, Any
+from typing import Dict, Any
 from dataclasses import dataclass
-from collections import defaultdict
 import os
 import tiktoken
-from hypertokenizer import HyperTokenizer16k
+from train_hypertokenizer import HyperTokenizer16k
 
 
 # === Advanced benchmark helpers (tailored to HyperTokenizer16k API) ===
@@ -169,7 +166,7 @@ class OfficialTokenizerBenchmark:
         
         # Load test tokenizer
         try:
-            model_path = os.environ.get("HYPER_MODEL_PATH", "ultra_hyper_tokenizer_16k.pkl")
+            model_path = os.environ.get("HYPER_MODEL_PATH", "HyperTokenizer.pkl")
             self.test_tokenizer = HyperTokenizer16k.load(model_path)
             print("✅ Loaded HyperTokenizer16k successfully")
         except Exception as e:
