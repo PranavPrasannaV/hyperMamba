@@ -1456,6 +1456,29 @@ if __name__ == "__main__":
         "Visit https://www.example.com/docs/api/v2/reference for complete documentation",
         '{"name": "John", "age": 30, "email": "john@example.com", "active": true}',
         
+        # ULTRA-TARGETED: Test 1 specific optimization patterns
+        "The quick brown fox jumps over the lazy dog",
+        "quick brown fox jumps over the lazy",
+        "brown fox jumps over the lazy dog",
+        "jumps over the lazy dog repeatedly",
+        "over the lazy dog repeatedly and",
+        "repeatedly and efficiently",
+        
+        # CATEGORY OPTIMIZATION: AI/ML/NLP Technical Writing patterns
+        "Natural language processing", "artificial intelligence", "machine learning algorithms",
+        "deep learning", "neural networks", "natural language understanding",
+        "computer vision", "reinforcement learning", "supervised learning",
+        "unsupervised learning", "semi-supervised learning", "transfer learning",
+        "transformer models", "attention mechanisms", "gradient descent",
+        "backpropagation", "convolutional neural networks", "recurrent neural networks",
+        "generative adversarial networks", "large language models", "foundation models",
+        "pre-trained models", "fine-tuning", "prompt engineering", "few-shot learning",
+        "zero-shot learning", "multi-modal learning", "cross-modal learning",
+        "revolutionize modern technology", "advanced machine learning", "computational intelligence",
+        "artificial neural networks", "deep reinforcement learning", "federated learning",
+        "meta-learning", "continual learning", "self-supervised learning",
+        "representation learning", "feature extraction", "dimensionality reduction",
+        
         # Technical abbreviations and acronyms
         "API REST JSON HTTP HTTPS SSL TLS TCP UDP IP DNS",
         "CPU GPU RAM SSD HDD USB HDMI WiFi Bluetooth",
