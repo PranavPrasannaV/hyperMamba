@@ -21,12 +21,24 @@ import time
 import statistics
 import json
 import re
+import logging
+import sys
+from datetime import datetime
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
 from collections import defaultdict
 import os
 import tiktoken
 from hypertokenizer_16k import HyperTokenizer16k
+
+
+# Configure logging
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s",
+    datefmt="%Y-%m-%d %H:%M:%S",
+)
 
 
 @dataclass
@@ -44,6 +56,37 @@ class BenchmarkResult:
     metadata: Dict[str, Any] = None
 
 
+class LoggingPrintCapture:
+    """Capture print statements and send them to both console and log file"""
+    
+    def __init__(self, logger):
+        self.logger = logger
+        self.original_stdout = sys.stdout
+        self.buffer = ""
+        
+    def write(self, message):
+        # Write to original stdout (console)
+        self.original_stdout.write(message)
+        self.original_stdout.flush()
+        
+        # Buffer the message for proper line handling
+        self.buffer += message
+        
+        # Process complete lines
+        while '\n' in self.buffer:
+            line, self.buffer = self.buffer.split('\n', 1)
+            if line.strip():  # Only log non-empty lines
+                # Log the complete line without truncation
+                self.logger.info(line.rstrip())
+    
+    def flush(self):
+        # Flush any remaining buffer content
+        if self.buffer.strip():
+            self.logger.info(self.buffer.strip())
+            self.buffer = ""
+        self.original_stdout.flush()
+
+
 class OfficialTokenizerBenchmark:
     """
     Industry-standard tokenizer benchmark suite
@@ -52,9 +95,12 @@ class OfficialTokenizerBenchmark:
     for production tokenizer deployment in tech companies.
     """
     
-    def __init__(self):
+    def __init__(self, log_file: str = None):
         self.results = []
         self.reference_tokenizer = tiktoken.get_encoding("o200k_base")  # GPT-4o tokenizer
+        
+        # Setup logging
+        self.setup_logging(log_file)
         
         # Load test tokenizer
         try:
@@ -63,6 +109,84 @@ class OfficialTokenizerBenchmark:
             print("✅ Loaded HyperTokenizer16k successfully")
         except Exception as e:
             raise RuntimeError(f"Failed to load HyperTokenizer16k: {e}")
+    
+    def setup_logging(self, log_file: str = None):
+        """Setup comprehensive logging for benchmark results"""
+        # Create logs directory if it doesn't exist
+        logs_dir = "logs"
+        os.makedirs(logs_dir, exist_ok=True)
+        
+        if log_file is None:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            log_file = f"tokenizer_benchmark_{timestamp}.log"
+        
+        # Ensure log file is in the logs directory
+        if not log_file.startswith(logs_dir):
+            log_file = os.path.join(logs_dir, log_file)
+        
+        # Create logger
+        self.logger = logging.getLogger('TokenizerBenchmark')
+        self.logger.setLevel(logging.INFO)
+        
+        # Remove existing handlers to avoid duplicates
+        for handler in self.logger.handlers[:]:
+            self.logger.removeHandler(handler)
+        
+        # File handler with no line length limits
+        file_handler = logging.FileHandler(log_file, mode='w', encoding='utf-8')
+        
+        # Simple formatter without timestamps for regular entries
+        file_formatter = logging.Formatter('%(message)s')
+        file_handler.setFormatter(file_formatter)
+        
+        # Ensure no message truncation
+        file_handler.setLevel(logging.INFO)
+        self.logger.addHandler(file_handler)
+        
+        # Store log file path for reference
+        self.log_file = log_file
+        
+        # Log session header with timestamp (only here)
+        self.logger.info("="*100)
+        self.logger.info("🚀 TOKENIZER BENCHMARK SESSION STARTED")
+        self.logger.info("="*100)
+        self.logger.info(f"📅 Timestamp: {datetime.now()}")
+        self.logger.info(f"📝 Log file: {log_file}")
+        self.logger.info(f"🐍 Python version: {sys.version}")
+        self.logger.info(f"💻 Working directory: {os.getcwd()}")
+        self.logger.info("="*100)
+        
+        print(f"📝 Logging enabled - Results will be saved to: {log_file}")
+    
+    def log_section_start(self, section_name: str, description: str = ""):
+        """Log the start of a new benchmark section with clear separation"""
+        separator = "="*100
+        self.logger.info("")
+        self.logger.info(separator)
+        self.logger.info(f"🔥 SECTION START: {section_name}")
+        if description:
+            self.logger.info(f"📋 Description: {description}")
+        self.logger.info(f"⏰ Started at: {datetime.now().strftime('%H:%M:%S')}")
+        self.logger.info(separator)
+    
+    def log_section_end(self, section_name: str, summary: str = ""):
+        """Log the end of a benchmark section with clear separation"""
+        separator = "="*100
+        self.logger.info("")
+        self.logger.info(f"✅ SECTION END: {section_name}")
+        if summary:
+            self.logger.info(f"📊 Summary: {summary}")
+        self.logger.info(f"⏰ Completed at: {datetime.now().strftime('%H:%M:%S')}")
+        self.logger.info(separator)
+        self.logger.info("")
+    
+    def log_test_entry(self, test_name: str, details: str = ""):
+        """Log individual test entries with clear formatting"""
+        self.logger.info(f"🧪 TEST: {test_name}")
+        if details:
+            # Ensure long details are not truncated
+            self.logger.info(f"📝 Details: {details}")
+        self.logger.info("-" * 80)
     
     def benchmark_text(self, tokenizer, text: str, tokenizer_name: str) -> Dict[str, Any]:
         """Benchmark a single text with comprehensive metrics"""
@@ -413,19 +537,34 @@ class OfficialTokenizerBenchmark:
         """
         Run the complete industry-standard benchmark suite
         """
+        self.log_section_start("COMPREHENSIVE BENCHMARK", "Full industry-standard tokenizer evaluation suite")
+        
         print("🏢 OFFICIAL INDUSTRY-STANDARD TOKENIZER BENCHMARK SUITE")
         print("=" * 80)
         print("Comprehensive evaluation using methodologies from tech giants")
         print("Based on research from OpenAI, Google, Meta, and academic institutions")
         print("=" * 80)
         
-        # Run all benchmark categories
+        # Run all benchmark categories with section logging
+        self.log_section_start("COMPRESSION BENCHMARK", "Testing compression efficiency vs reference tokenizer")
         self.run_compression_benchmark()
+        self.log_section_end("COMPRESSION BENCHMARK")
+        
+        self.log_section_start("SPEED BENCHMARK", "Testing encoding/decoding performance")
         self.run_speed_benchmark()
+        self.log_section_end("SPEED BENCHMARK")
+        
+        self.log_section_start("CHARACTER LEVEL BENCHMARK", "Testing character-level reasoning and morphological alignment")
         self.run_character_level_benchmark()
+        self.log_section_end("CHARACTER LEVEL BENCHMARK")
+        
+        self.log_section_start("ROBUSTNESS BENCHMARK", "Testing edge case handling and domain robustness")
         self.run_robustness_benchmark()
+        self.log_section_end("ROBUSTNESS BENCHMARK")
         
         # Final overall assessment
+        self.log_section_start("FINAL ASSESSMENT", "Overall benchmark results and grading")
+        
         print("\n" + "="*80)
         print("🏆 FINAL OVERALL ASSESSMENT")
         print("="*80)
@@ -461,12 +600,110 @@ class OfficialTokenizerBenchmark:
                 print("• Excellent performance! Consider optimizing speed further")
         
         print("\n✅ BENCHMARK COMPLETE - Results ready for production evaluation")
+        
+        # Log completion with summary
+        summary = f"Grade: {grade if 'grade' in locals() else 'N/A'}, Tests: {len(self.results)}, Success Rate: {overall_success_rate:.1f}% if 'overall_success_rate' in locals() else 'N/A'"
+        self.log_section_end("FINAL ASSESSMENT", summary)
+        self.log_section_end("COMPREHENSIVE BENCHMARK", f"Completed {len(self.results)} total tests")
+        
+        # Save detailed results to JSON
+        self.save_detailed_results()
+    
+    def save_detailed_results(self):
+        """Save detailed benchmark results to JSON file"""
+        # Ensure logs directory exists
+        logs_dir = "logs"
+        os.makedirs(logs_dir, exist_ok=True)
+        
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        json_file = os.path.join(logs_dir, f"benchmark_results_{timestamp}.json")
+        
+        # Convert results to JSON-serializable format
+        results_data = {
+            "metadata": {
+                "timestamp": datetime.now().isoformat(),
+                "total_tests": len(self.results),
+                "log_file": self.log_file
+            },
+            "results": []
+        }
+        
+        for result in self.results:
+            results_data["results"].append({
+                "tokenizer_name": result.tokenizer_name,
+                "category": result.category,
+                "test_name": result.test_name,
+                "tokens": result.tokens,
+                "encode_time_ms": result.encode_time_ms,
+                "decode_time_ms": result.decode_time_ms,
+                "compression_ratio": result.compression_ratio,
+                "success": result.success,
+                "error_message": result.error_message,
+                "metadata": result.metadata
+            })
+        
+        try:
+            with open(json_file, 'w', encoding='utf-8') as f:
+                json.dump(results_data, f, indent=2, ensure_ascii=False)
+            print(f"📊 Detailed results saved to: {json_file}")
+            self.logger.info(f"Detailed results saved to JSON: {json_file}")
+        except Exception as e:
+            print(f"❌ Failed to save JSON results: {e}")
+            self.logger.error(f"Failed to save JSON results: {e}")
 
 
 def main():
     """Run the official industry-standard tokenizer benchmark"""
-    benchmark = OfficialTokenizerBenchmark()
-    benchmark.run_comprehensive_benchmark()
+    # Setup print capture for comprehensive logging
+    import sys
+    
+    # Allow custom log file via command line argument
+    log_file = None
+    if len(sys.argv) > 1:
+        # If user provides a custom filename, it will be placed in logs/ directory
+        custom_name = sys.argv[1]
+        if not custom_name.endswith('.log'):
+            custom_name += '.log'
+        log_file = custom_name
+    
+    # Create benchmark instance with logging
+    benchmark = OfficialTokenizerBenchmark(log_file=log_file)
+    
+    print(f"� Log files will be saved to: logs/ directory")
+    print(f"📝 Current log file: {benchmark.log_file}")
+    print(f"📊 JSON results will also be saved to logs/ directory")
+    print("="*80)
+    
+    try:
+        # Redirect stdout to capture all print statements
+        original_stdout = sys.stdout
+        sys.stdout = LoggingPrintCapture(benchmark.logger)
+        
+        # Run the benchmark
+        benchmark.run_comprehensive_benchmark()
+        
+    finally:
+        # Restore original stdout
+        sys.stdout = original_stdout
+        
+        # Flush any remaining buffer content
+        if hasattr(sys.stdout, 'flush'):
+            sys.stdout.flush()
+        
+        # Final log message with session completion
+        benchmark.logger.info("")
+        benchmark.logger.info("="*100)
+        benchmark.logger.info("🎉 TOKENIZER BENCHMARK SESSION COMPLETED SUCCESSFULLY")
+        benchmark.logger.info("="*100)
+        benchmark.logger.info(f"📊 Total tests executed: {len(benchmark.results)}")
+        benchmark.logger.info(f"⏰ Session ended at: {datetime.now()}")
+        benchmark.logger.info(f"📝 Log file: {benchmark.log_file}")
+        benchmark.logger.info("="*100)
+        
+        print(f"\n🎉 Benchmark completed!")
+        print(f"📁 All results saved in logs/ directory:")
+        print(f"  📝 Log file: {benchmark.log_file}")
+        print(f"  📊 JSON results: Check logs/ for benchmark_results_*.json")
 
 
 if __name__ == "__main__":

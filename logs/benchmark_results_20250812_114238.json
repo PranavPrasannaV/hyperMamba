@@ -1,0 +1,339 @@
+{
+  "metadata": {
+    "timestamp": "2025-08-12T11:42:38.487303",
+    "total_tests": 22,
+    "log_file": "logs/tokenizer_benchmark_20250812_114238.log"
+  },
+  "results": [
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_1",
+      "tokens": 11,
+      "encode_time_ms": 0.01879199407994747,
+      "decode_time_ms": 0.006041955202817917,
+      "compression_ratio": 0.8461538461538461,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 13,
+        "text_length": 71
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_2",
+      "tokens": 13,
+      "encode_time_ms": 0.02400000812485814,
+      "decode_time_ms": 0.003958004526793957,
+      "compression_ratio": 0.8125,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 16,
+        "text_length": 133
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_3",
+      "tokens": 17,
+      "encode_time_ms": 0.025958986952900887,
+      "decode_time_ms": 0.005499983672052622,
+      "compression_ratio": 0.9444444444444444,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 18,
+        "text_length": 114
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_4",
+      "tokens": 14,
+      "encode_time_ms": 0.015290977898985147,
+      "decode_time_ms": 0.0037080026231706142,
+      "compression_ratio": 0.6086956521739131,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 23,
+        "text_length": 73
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_5",
+      "tokens": 16,
+      "encode_time_ms": 0.02379197394475341,
+      "decode_time_ms": 0.004624947905540466,
+      "compression_ratio": 0.8,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 20,
+        "text_length": 72
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_6",
+      "tokens": 15,
+      "encode_time_ms": 0.022374966647475958,
+      "decode_time_ms": 0.004167028237134218,
+      "compression_ratio": 0.9375,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 16,
+        "text_length": 70
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_7",
+      "tokens": 10,
+      "encode_time_ms": 0.012166972737759352,
+      "decode_time_ms": 0.003667024429887533,
+      "compression_ratio": 0.9090909090909091,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 11,
+        "text_length": 59
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_8",
+      "tokens": 17,
+      "encode_time_ms": 0.02274999860674143,
+      "decode_time_ms": 0.004500034265220165,
+      "compression_ratio": 1.2142857142857142,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 14,
+        "text_length": 78
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_9",
+      "tokens": 8,
+      "encode_time_ms": 0.013583980035036802,
+      "decode_time_ms": 0.002541986759752035,
+      "compression_ratio": 0.34782608695652173,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 23,
+        "text_length": 70
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_10",
+      "tokens": 19,
+      "encode_time_ms": 0.020709005184471607,
+      "decode_time_ms": 0.003958994057029486,
+      "compression_ratio": 0.8636363636363636,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 22,
+        "text_length": 66
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_11",
+      "tokens": 16,
+      "encode_time_ms": 0.016874982975423336,
+      "decode_time_ms": 0.0035840203054249287,
+      "compression_ratio": 1.1428571428571428,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 14,
+        "text_length": 80
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_12",
+      "tokens": 12,
+      "encode_time_ms": 0.01491600414738059,
+      "decode_time_ms": 0.0028750509954988956,
+      "compression_ratio": 1.0,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 12,
+        "text_length": 82
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_13",
+      "tokens": 11,
+      "encode_time_ms": 0.015542027540504932,
+      "decode_time_ms": 0.0024589826352894306,
+      "compression_ratio": 0.55,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 20,
+        "text_length": 60
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_14",
+      "tokens": 12,
+      "encode_time_ms": 0.016790989320725203,
+      "decode_time_ms": 0.0037080026231706142,
+      "compression_ratio": 0.7058823529411765,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 17,
+        "text_length": 71
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_15",
+      "tokens": 22,
+      "encode_time_ms": 0.021499989088624716,
+      "decode_time_ms": 0.004166970029473305,
+      "compression_ratio": 0.88,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 25,
+        "text_length": 72
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_16",
+      "tokens": 8,
+      "encode_time_ms": 0.011458003427833319,
+      "decode_time_ms": 0.002541986759752035,
+      "compression_ratio": 0.47058823529411764,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 17,
+        "text_length": 73
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_17",
+      "tokens": 11,
+      "encode_time_ms": 0.016458972822874784,
+      "decode_time_ms": 0.0027919886633753777,
+      "compression_ratio": 0.4782608695652174,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 23,
+        "text_length": 75
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_18",
+      "tokens": 23,
+      "encode_time_ms": 0.03037502756342292,
+      "decode_time_ms": 0.005125009920448065,
+      "compression_ratio": 0.6571428571428571,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 35,
+        "text_length": 81
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_19",
+      "tokens": 17,
+      "encode_time_ms": 0.0179160269908607,
+      "decode_time_ms": 0.0029170187190175056,
+      "compression_ratio": 0.68,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 25,
+        "text_length": 80
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_20",
+      "tokens": 25,
+      "encode_time_ms": 0.028125010430812836,
+      "decode_time_ms": 0.004291010554879904,
+      "compression_ratio": 1.1363636363636365,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 22,
+        "text_length": 90
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_21",
+      "tokens": 22,
+      "encode_time_ms": 0.02562499139457941,
+      "decode_time_ms": 0.005665991920977831,
+      "compression_ratio": 0.8148148148148148,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 27,
+        "text_length": 84
+      }
+    },
+    {
+      "tokenizer_name": "HyperTokenizer16k",
+      "category": "compression",
+      "test_name": "compression_test_22",
+      "tokens": 22,
+      "encode_time_ms": 0.02570805372670293,
+      "decode_time_ms": 0.004125002305954695,
+      "compression_ratio": 0.8461538461538461,
+      "success": true,
+      "error_message": "",
+      "metadata": {
+        "reference_tokens": 26,
+        "text_length": 89
+      }
+    }
+  ]
+}
