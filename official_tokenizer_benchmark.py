@@ -26,10 +26,120 @@ import sys
 from datetime import datetime
 from typing import Dict, List, Tuple, Any
 from dataclasses import dataclass
-from collections import defaultdict
 import os
 import tiktoken
-from hypertokenizer_16k import HyperTokenizer16k
+from train_hypertokenizer import HyperTokenizer16k
+
+
+# === Advanced benchmark helpers (tailored to HyperTokenizer16k API) ===
+import gc
+from time import perf_counter
+try:
+    import psutil  # optional for memory metrics
+    _HAS_PSUTIL = True
+except Exception:
+    _HAS_PSUTIL = False
+
+def _bench_time(func, args_list, warmup=5, repeats=20):
+    # Warmup
+    for _ in range(warmup):
+        for args in args_list:
+            func(*args)
+    gc.disable()
+    times = []
+    for _ in range(repeats):
+        t0 = perf_counter()
+        for args in args_list:
+            func(*args)
+        times.append(perf_counter() - t0)
+    gc.enable()
+    import statistics as _stats
+    return {
+        "p50": _stats.median(times),
+        "p95": _stats.quantiles(times, n=20)[18] if len(times) >= 20 else max(times),
+        "p99": max(times),
+        "mean": _stats.fmean(times),
+        "stdev": _stats.pstdev(times) if len(times) > 1 else 0.0,
+        "n": len(times),
+    }
+
+def _throughput_mb_s(encode, texts, repeats=5):
+    total_bytes = sum(len(t.encode("utf-8")) for t in texts)
+    # Warmup
+    for _ in range(2):
+        for t in texts:
+            encode(t)
+    gc.disable()
+    t0 = perf_counter()
+    for _ in range(repeats):
+        for t in texts:
+            encode(t)
+    dt = perf_counter() - t0
+    gc.enable()
+    return (total_bytes * repeats) / (1024 * 1024) / max(dt, 1e-12)
+
+def _token_efficiency(encode_a, encode_b, texts):
+    a_tokens = sum(len(encode_a(t)) for t in texts)
+    b_tokens = sum(len(encode_b(t)) for t in texts)
+    return a_tokens / max(b_tokens, 1)
+
+def _success_and_determinism(encode, decode, texts):
+    for t in texts:
+        tok1 = encode(t)
+        tok2 = encode(t)
+        if tok1 != tok2:
+            return {"ok": False, "reason": "nondeterministic encode"}
+        try:
+            back = decode(tok1)
+        except Exception as e:
+            return {"ok": False, "reason": f"decode error: {e}"}
+        if back != t:
+            return {"ok": False, "reason": "roundtrip mismatch"}
+    return {"ok": True}
+
+def _peak_memory_encode(encode, texts):
+    if not _HAS_PSUTIL:
+        return {"supported": False}
+    p = psutil.Process(os.getpid())
+    baseline = p.memory_info().rss
+    for t in texts:
+        encode(t)
+    peak = p.memory_info().rss
+    return {"supported": True, "baseline_bytes": baseline, "peak_bytes": peak, "delta_bytes": peak - baseline}
+
+def _scale_latency(encode, gen_text, sizes=(1_000, 10_000, 100_000, 1_000_000)):
+    results = []
+    for n in sizes:
+        s = gen_text(n)
+        t0 = perf_counter(); encode(s); dt = perf_counter() - t0
+        results.append({
+            "bytes": len(s.encode('utf-8')),
+            "time_s": dt,
+            "ns_per_byte": (dt * 1e9) / max(len(s), 1)
+        })
+    return results
+
+def _build_inputs():
+    code = "def f(x):\n    return x*x\n" * 200
+    md = "# Title\n\nSome text " * 500
+    jsonlike = '{"key": "value", "arr": [1,2,3]}\n' * 400
+    emoji = ("🙂🚀🔥✨" * 1000)
+    cjk = "这是一些中文文本。" * 500 + "日本語の文章です。" * 500 + "한국어 문장입니다." * 500
+    prompts = [f"User:{i} -> Hello! 🙂" for i in range(512)]
+    return {
+        "latency_small": ["Hello, world!", "short test", "π≈3.14159", "🙂"] * 16,
+        "latency_medium": [md, code],
+        "latency_large": [md + code + jsonlike + emoji + cjk],
+        "throughput_batch_short": prompts,
+        "throughput_mixed": [code, md, jsonlike, emoji, cjk],
+    }
+
+def _gen_text(n):
+    base = ("The quick 🦊 fox jumps over the lazy 🐶 dog. こんにちは 你好 مرحبا\n")
+    s = []
+    while sum(len(x) for x in s) < n:
+        s.append(base)
+    return "".join(s)[:n]
 
 
 # Configure logging
@@ -97,14 +207,14 @@ class OfficialTokenizerBenchmark:
     
     def __init__(self, log_file: str = None):
         self.results = []
-        self.reference_tokenizer = tiktoken.get_encoding("o200k_base")  # GPT-4o tokenizer
+        self.reference_tokenizer = tiktoken.get_encoding("o200k_base")  # GPT-5 tokenizer
         
         # Setup logging
         self.setup_logging(log_file)
         
         # Load test tokenizer
         try:
-            model_path = os.environ.get("HYPER_MODEL_PATH", "ultra_hyper_tokenizer_16k.pkl")
+            model_path = os.environ.get("HYPER_MODEL_PATH", "HyperTokenizer.pkl")
             self.test_tokenizer = HyperTokenizer16k.load(model_path)
             print("✅ Loaded HyperTokenizer16k successfully")
         except Exception as e:
@@ -533,6 +643,62 @@ class OfficialTokenizerBenchmark:
         else:
             print("❌ POOR: Significant robustness issues")
     
+    def run_advanced_benchmarks(self):
+        """
+        Additional advanced benchmarks: latency percentiles, throughput, token efficiency,
+        success/determinism, peak memory, and scaling behavior.
+        """
+        print("\n" + "="*80)
+        print("🧪 ADVANCED BENCHMARKS (Latency/Throughput/Efficiency/Scaling)")
+        print("="*80)
+
+        inputs = _build_inputs()
+
+        # Wire encoders/decoders
+        hyper_enc = lambda s: self.test_tokenizer.encode(s, use_lattice=False)
+        hyper_dec = self.test_tokenizer.decode
+        tik_enc = self.reference_tokenizer.encode
+        tik_dec = self.reference_tokenizer.decode
+
+        # Token efficiency (lower is better; hyper/tiktoken)
+        ratio = _token_efficiency(hyper_enc, tik_enc, inputs["throughput_mixed"] + inputs["throughput_batch_short"])
+        print(f"Token efficiency (compression ratio hyper/tiktoken): {ratio:.3f} {'✅' if ratio < 1.0 else '❌'}")
+
+        # Latency percentiles
+        print("\nLatency percentiles (seconds per batch; p50/p95/p99):")
+        for name in ["latency_small", "latency_medium", "latency_large"]:
+            args = [(t,) for t in inputs[name]]
+            res_h = _bench_time(lambda x: hyper_enc(x), args)
+            res_t = _bench_time(lambda x: tik_enc(x), args)
+            print(f"{name}: hyper={{'p50':{res_h['p50']:.6f},'p95':{res_h['p95']:.6f},'p99':{res_h['p99']:.6f}}}  "
+                  f"tiktoken={{'p50':{res_t['p50']:.6f},'p95':{res_t['p95']:.6f},'p99':{res_t['p99']:.6f}}}")
+
+        # Throughput MB/s
+        th_h = _throughput_mb_s(hyper_enc, inputs["throughput_mixed"], repeats=5)
+        th_t = _throughput_mb_s(tik_enc, inputs["throughput_mixed"], repeats=5)
+        print(f"\nThroughput (mixed inputs) MB/s: hyper={th_h:.2f}, tiktoken={th_t:.2f}")
+
+        th_h_s = _throughput_mb_s(hyper_enc, inputs["throughput_batch_short"], repeats=3)
+        th_t_s = _throughput_mb_s(tik_enc, inputs["throughput_batch_short"], repeats=3)
+        print(f"Throughput (many short) MB/s: hyper={th_h_s:.2f}, tiktoken={th_t_s:.2f}")
+
+        # Success + determinism
+        ok_h = _success_and_determinism(hyper_enc, hyper_dec, inputs["throughput_mixed"]) 
+        ok_t = _success_and_determinism(tik_enc, tik_dec, inputs["throughput_mixed"]) 
+        print(f"\nSuccess + Determinism: hyper={ok_h}, tiktoken={ok_t}")
+
+        # Peak memory
+        pm_h = _peak_memory_encode(hyper_enc, inputs["latency_large"]) 
+        pm_t = _peak_memory_encode(tik_enc, inputs["latency_large"]) 
+        print(f"\nPeak memory (bytes): hyper={pm_h}, tiktoken={pm_t}")
+
+        # Scaling behavior
+        sc_h = _scale_latency(hyper_enc, _gen_text)
+        sc_t = _scale_latency(tik_enc, _gen_text)
+        print("\nScaling (ns/byte across sizes):")
+        print({"hyper": sc_h})
+        print({"tiktoken": sc_t})
+    
     def run_comprehensive_benchmark(self):
         """
         Run the complete industry-standard benchmark suite
@@ -560,7 +726,7 @@ class OfficialTokenizerBenchmark:
         
         self.log_section_start("ROBUSTNESS BENCHMARK", "Testing edge case handling and domain robustness")
         self.run_robustness_benchmark()
-        self.log_section_end("ROBUSTNESS BENCHMARK")
+        self.run_advanced_benchmarks()
         
         # Final overall assessment
         self.log_section_start("FINAL ASSESSMENT", "Overall benchmark results and grading")
