@@ -1,0 +1,237 @@
+====================================================================================================
+🚀 TOKENIZER BENCHMARK SESSION STARTED
+====================================================================================================
+📅 Timestamp: 2025-08-12 11:56:10.781041
+📝 Log file: logs/tokenizer_benchmark_20250812_115610.log
+🐍 Python version: 3.13.5 (v3.13.5:6cb20a219a8, Jun 11 2025, 12:23:45) [Clang 16.0.0 (clang-1600.0.26.6)]
+💻 Working directory: /Users/aadisaraf/Documents/hyperMamba
+====================================================================================================
+
+====================================================================================================
+🔥 SECTION START: COMPREHENSIVE BENCHMARK
+📋 Description: Full industry-standard tokenizer evaluation suite
+⏰ Started at: 11:56:10
+====================================================================================================
+🏢 OFFICIAL INDUSTRY-STANDARD TOKENIZER BENCHMARK SUITE
+================================================================================
+Comprehensive evaluation using methodologies from tech giants
+Based on research from OpenAI, Google, Meta, and academic institutions
+================================================================================
+
+====================================================================================================
+🔥 SECTION START: COMPRESSION BENCHMARK
+📋 Description: Testing compression efficiency vs reference tokenizer
+⏰ Started at: 11:56:10
+====================================================================================================
+================================================================================
+📊 COMPRESSION EFFICIENCY BENCHMARK
+================================================================================
+Primary metric used by OpenAI, Google, Meta for tokenizer evaluation
+Test 1: The quick brown fox jumps over the lazy dog repeatedly and e...
+  Reference (tiktoken)     → Tokens:  13, Time:  0.35ms
+  HyperTokenizer16k        → Tokens:   8, Time:  0.03ms
+  Compression Ratio: 0.615 ✅
+Test 2: Natural language processing and artificial intelligence revo...
+  Reference (tiktoken)     → Tokens:  16, Time:  0.03ms
+  HyperTokenizer16k        → Tokens:  14, Time:  0.03ms
+  Compression Ratio: 0.875 ✅
+Test 3: In the realm of quantum computing, superposition and entangl...
+  Reference (tiktoken)     → Tokens:  18, Time:  0.04ms
+  HyperTokenizer16k        → Tokens:  11, Time:  0.07ms
+  Compression Ratio: 0.611 ✅
+Test 4: def fibonacci(n): return n if n <= 1 else fibonacci(n-1) + f...
+  Reference (tiktoken)     → Tokens:  23, Time:  0.05ms
+  HyperTokenizer16k        → Tokens:  13, Time:  0.02ms
+  Compression Ratio: 0.565 ✅
+Test 5: import torch; model = torch.nn.TransformerEncoder(layers=6, ...
+  Reference (tiktoken)     → Tokens:  20, Time:  0.03ms
+  HyperTokenizer16k        → Tokens:  15, Time:  0.03ms
+  Compression Ratio: 0.750 ✅
+Test 6: const apiResponse = await fetch('/api/users').then(res => re...
+  Reference (tiktoken)     → Tokens:  16, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  12, Time:  0.02ms
+  Compression Ratio: 0.750 ✅
+Test 7: public class DataProcessor { private final Config config; }
+  Reference (tiktoken)     → Tokens:  11, Time:  0.01ms
+  HyperTokenizer16k        → Tokens:   6, Time:  0.01ms
+  Compression Ratio: 0.545 ✅
+Test 8: Visit https://www.example.com/docs/api/v2/reference for comp...
+  Reference (tiktoken)     → Tokens:  14, Time:  0.01ms
+  HyperTokenizer16k        → Tokens:  14, Time:  0.02ms
+  Compression Ratio: 1.000 ❌
+Test 9: <div class='container'><h1>Welcome</h1><p>Get started today!...
+  Reference (tiktoken)     → Tokens:  23, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:   5, Time:  0.01ms
+  Compression Ratio: 0.217 ✅
+Test 10: body { font-family: Arial, sans-serif; margin: 0; padding: 2...
+  Reference (tiktoken)     → Tokens:  22, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  14, Time:  0.02ms
+  Compression Ratio: 0.636 ✅
+Test 11: The algorithm achieves O(n log n) time complexity with optim...
+  Reference (tiktoken)     → Tokens:  14, Time:  0.05ms
+  HyperTokenizer16k        → Tokens:   9, Time:  0.03ms
+  Compression Ratio: 0.643 ✅
+Test 12: Neural networks utilize backpropagation for gradient-based o...
+  Reference (tiktoken)     → Tokens:  12, Time:  0.08ms
+  HyperTokenizer16k        → Tokens:  10, Time:  0.02ms
+  Compression Ratio: 0.833 ✅
+Test 13: DNA sequences: ATCGATCGATCG, RNA transcription: AUCGAUCGAUCG
+  Reference (tiktoken)     → Tokens:  20, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:   6, Time:  0.02ms
+  Compression Ratio: 0.300 ✅
+Test 14: SELECT * FROM users WHERE active = 1 ORDER BY created_at DES...
+  Reference (tiktoken)     → Tokens:  17, Time:  0.03ms
+  HyperTokenizer16k        → Tokens:   9, Time:  0.03ms
+  Compression Ratio: 0.529 ✅
+Test 15: {"name": "John", "age": 30, "email": "john@example.com", "ac...
+  Reference (tiktoken)     → Tokens:  25, Time:  0.03ms
+  HyperTokenizer16k        → Tokens:  22, Time:  0.04ms
+  Compression Ratio: 0.880 ✅
+Test 16: Version 2.1.3-beta.4 released with performance improvements ...
+  Reference (tiktoken)     → Tokens:  17, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:   8, Time:  0.02ms
+  Compression Ratio: 0.471 ✅
+Test 17: Processing 1,234,567 records at 99.7% accuracy with 0.003ms ...
+  Reference (tiktoken)     → Tokens:  23, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:   7, Time:  0.02ms
+  Compression Ratio: 0.304 ✅
+Test 18: User ID: usr_1234567890, Session: tok_abcdef123456, Expires:...
+  Reference (tiktoken)     → Tokens:  35, Time:  0.03ms
+  HyperTokenizer16k        → Tokens:  15, Time:  0.03ms
+  Compression Ratio: 0.429 ✅
+Test 19: Phone: +1-555-123-4567, Email: support@company.com, Website:...
+  Reference (tiktoken)     → Tokens:  25, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  14, Time:  0.03ms
+  Compression Ratio: 0.560 ✅
+Test 20: Error 404: Page not found. Please check the URL https://exam...
+  Reference (tiktoken)     → Tokens:  22, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  14, Time:  0.03ms
+  Compression Ratio: 0.636 ✅
+Test 21: Meeting scheduled for 2024-01-15 at 2:30 PM in Conference Ro...
+  Reference (tiktoken)     → Tokens:  27, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  16, Time:  0.02ms
+  Compression Ratio: 0.593 ✅
+Test 22: Log entry [2024-01-15 14:30:25] INFO: User authentication su...
+  Reference (tiktoken)     → Tokens:  26, Time:  0.02ms
+  HyperTokenizer16k        → Tokens:  16, Time:  0.03ms
+  Compression Ratio: 0.615 ✅
+============================================================
+COMPRESSION BENCHMARK SUMMARY
+============================================================
+Total tests: 22
+Success rate: 100.0%
+Average compression ratio: 0.607
+Median compression ratio: 0.613
+Best compression ratio: 0.217
+Worst compression ratio: 1.000
+Average encode time: 0.03ms
+🏆 EXCELLENT: Significantly better compression than reference
+
+✅ SECTION END: COMPRESSION BENCHMARK
+⏰ Completed at: 11:56:10
+====================================================================================================
+
+
+====================================================================================================
+🔥 SECTION START: SPEED BENCHMARK
+📋 Description: Testing encoding/decoding performance
+⏰ Started at: 11:56:10
+====================================================================================================
+================================================================================
+⚡ SPEED PERFORMANCE BENCHMARK
+================================================================================
+Critical metric for production deployment in tech companies
+Test Name       Length   HyperTokenizer  Tiktoken     Speedup
+----------------------------------------------------------------------
+Short text      12       0.00            0.00         1.52      x
+Medium text     440      0.01            0.03         2.90      x
+Long text       2450     0.04            0.12         3.33      x
+Code snippet    1220     0.04            0.12         3.05      x
+JSON data       1200     0.04            0.16         3.83      x
+URL heavy       1475     0.04            0.13         3.55      x
+Mixed content   1095     0.03            0.09         3.32      x
+============================================================
+SPEED BENCHMARK SUMMARY
+============================================================
+Average speedup vs tiktoken: 3.07x
+🏆 EXCELLENT: Significantly faster than reference
+
+✅ SECTION END: SPEED BENCHMARK
+⏰ Completed at: 11:56:10
+====================================================================================================
+
+
+====================================================================================================
+🔥 SECTION START: CHARACTER LEVEL BENCHMARK
+📋 Description: Testing character-level reasoning and morphological alignment
+⏰ Started at: 11:56:10
+====================================================================================================
+================================================================================
+🔤 CHARACTER-LEVEL REASONING BENCHMARK (CharBench)
+================================================================================
+Based on academic research - tests character-level understanding
+Task                      Word         Target   Expected   Tokens   Efficiency
+--------------------------------------------------------------------------------
+Count 'r' in 'strawberry' strawberry   r        3          1        3.00x
+Count 'l' in 'hello'      hello        l        2          1        1.00x
+Count 'a' in 'banana'     banana       a        3          1        1.00x
+Count 's' in 'assessment' assessment   s        4          1        1.00x
+Find first 'o' in 'hello' hello        o        4          1        1.00x
+Find first 'a' in 'banana' banana       a        1          1        1.00x
+Find first 'e' in 'development' development  e        1          1        1.00x
+============================================================
+CHARACTER-LEVEL BENCHMARK SUMMARY
+============================================================
+Lower token counts generally correlate with better character-level performance
+This benchmark assesses tokenizer's suitability for character-aware tasks
+
+✅ SECTION END: CHARACTER LEVEL BENCHMARK
+⏰ Completed at: 11:56:10
+====================================================================================================
+
+
+====================================================================================================
+🔥 SECTION START: ROBUSTNESS BENCHMARK
+📋 Description: Testing edge case handling and domain robustness
+⏰ Started at: 11:56:10
+====================================================================================================
+================================================================================
+🛡️  ROBUSTNESS AND EDGE CASE BENCHMARK
+================================================================================
+Tests challenging inputs that commonly cause production failures
+Test Case            Input                          Tokens   Success  Time (ms)
+---------------------------------------------------------------------------
+Multiple spaces      word1    word2    word3        5        ✅        0.01
+Mixed whitespace     word1		word2
+word3            5        ✅        0.01
+Leading/trailing        leading and trailing        4        ✅        0.01
+Unicode              café naïve résumé 🚀 🎯 ✅        6        ✅        0.22
+Punctuation heavy    Hello!!! What??? Yes... No-... 14       ✅        0.02
+Mixed symbols        @#$%^&*()[]{}|\:;"'<>,./?      1        ✅        0.01
+Repeated chars       aaaaaaaaaaaaaaaaaaaaaaaaaaa... 1        ✅        0.02
+Long identifier      very_long_variable_name_tha... 1        ✅        0.01
+Long URL             https://www.example.com/ver... 32       ✅        0.03
+Empty string                                        0        ✅        0.00
+Single char          a                              1        ✅        0.00
+Single space                                        1        ✅        0.00
+Large numbers        123456789012345678901234567890 1        ✅        0.01
+Scientific notation  1.23e-45 6.78e+123             9        ✅        0.01
+Mixed numeric        v1.2.3-beta.4+build.567.890    5        ✅        0.01
+============================================================
+ROBUSTNESS BENCHMARK SUMMARY
+============================================================
+Success rate: 100.0%
+Average processing time: 0.02ms
+🏆 EXCELLENT: Highly robust tokenizer
+================================================================================
+🧪 ADVANCED BENCHMARKS (Latency/Throughput/Efficiency/Scaling)
+================================================================================
+Token efficiency (compression ratio hyper/tiktoken): 0.719 ✅
+Latency percentiles (seconds per batch; p50/p95/p99):
+latency_small: hyper={'p50':0.000012,'p95':0.000017,'p99':0.000017}  tiktoken={'p50':0.000100,'p95':0.000108,'p99':0.000108}
+latency_medium: hyper={'p50':0.000005,'p95':0.000007,'p99':0.000007}  tiktoken={'p50':0.001538,'p95':0.001637,'p99':0.001640}
+latency_large: hyper={'p50':0.000028,'p95':0.000031,'p99':0.000031}  tiktoken={'p50':0.038917,'p95':0.039618,'p99':0.039635}
+Throughput (mixed inputs) MB/s: hyper=2916.58, tiktoken=2.03
+Throughput (many short) MB/s: hyper=120.24, tiktoken=7.57
+Success + Determinism: hyper={'ok': True}, tiktoken={'ok': True}
+Peak memory (bytes): hyper={'supported': False}, tiktoken={'supported': False}
